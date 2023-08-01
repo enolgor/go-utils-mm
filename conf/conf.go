@@ -38,7 +38,11 @@ func Set[T Configurable](take *T, envKey, flagKey string, def T) {
 		}
 	}
 	if flagKey != "" {
-		flag.Func(flagKey, "", flagFunc(take))
+		if v, ok := any(take).(*bool); ok {
+			flag.BoolVar(v, flagKey, *v, "")
+		} else {
+			flag.Func(flagKey, "", flagFunc(take))
+		}
 	}
 }
 

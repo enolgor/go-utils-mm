@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	fmt.Printf("%s:%d tz=%s\n", examples.HOST, examples.PORT, examples.TIMEZONE.String())
+	fmt.Printf("%s:%d tz=%s t=%v\n", examples.HOST, examples.PORT, examples.TIMEZONE.String(), examples.TEST)
 }
