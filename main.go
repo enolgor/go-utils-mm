@@ -8,4 +8,6 @@ import (
 
 func main() {
 	fmt.Printf("%s:%d tz=%s t=%v\n", examples.HOST, examples.PORT, examples.TIMEZONE.String(), examples.TEST)
+	fmt.Printf("%v\n", examples.LANG)
+	//examples.Http()
 }

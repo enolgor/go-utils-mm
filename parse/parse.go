@@ -1,9 +1,14 @@
 package parse
 
 import (
+	"encoding/base32"
+	"encoding/base64"
+	"encoding/hex"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/enolgor/go-utils/types"
 	"golang.org/x/text/language"
 )
 
@@ -13,7 +18,17 @@ type Parseable interface {
 		float32 | float64 |
 		bool | string |
 		complex64 | complex128 |
-		time.Duration | time.Time | time.Location | language.Tag
+		time.Duration | time.Time | time.Location | language.Tag |
+		[]int | []int8 | []int16 | []int32 | []int64 |
+		[]uint | []uint8 | []uint16 | []uint32 | []uint64 |
+		[]float32 | []float64 |
+		[]bool | []string |
+		[]complex64 | []complex128 |
+		[]time.Duration | []time.Time | []time.Location | []language.Tag |
+		types.HexByte | types.OctByte |
+		types.HexBytes | types.B32Bytes | types.B64Bytes |
+		[]types.HexByte | []types.OctByte |
+		[]types.HexBytes | []types.B32Bytes | []types.B64Bytes
 }
 
 func Int(str string) (int, error) {
@@ -109,6 +124,31 @@ func Language(str string) (language.Tag, error) {
 	return language.Parse(str)
 }
 
+func HexByte(str string) (types.HexByte, error) {
+	v, err := strconv.ParseUint(str, 16, 8)
+	return types.HexByte(v), err
+}
+
+func OctByte(str string) (types.OctByte, error) {
+	v, err := strconv.ParseUint(str, 8, 8)
+	return types.OctByte(v), err
+}
+
+func HexBytes(str string) (types.HexBytes, error) {
+	data, err := hex.DecodeString(str)
+	return types.HexBytes(data), err
+}
+
+func B32Bytes(str string) (types.B32Bytes, error) {
+	data, err := base32.StdEncoding.DecodeString(str)
+	return types.B32Bytes(data), err
+}
+
+func B64Bytes(str string) (types.B64Bytes, error) {
+	data, err := base64.RawStdEncoding.DecodeString(str)
+	return types.B64Bytes(data), err
+}
+
 func Must[P Parseable](parser func(string) (P, error)) func(string) P {
 	return func(str string) P {
 		v, err := parser(str)
@@ -162,6 +202,66 @@ func GetParser[P Parseable](take *P) func(string) (P, error) {
 		p = any(Location)
 	case *language.Tag:
 		p = any(Language)
+	case *[]int:
+		p = any(ParseArray(Int))
+	case *[]int8:
+		p = any(ParseArray(Int8))
+	case *[]int16:
+		p = any(ParseArray(Int16))
+	case *[]int32:
+		p = any(ParseArray(Int32))
+	case *[]int64:
+		p = any(ParseArray(Int64))
+	case *[]uint:
+		p = any(ParseArray(Uint))
+	case *[]uint8:
+		p = any(ParseArray(Uint8))
+	case *[]uint16:
+		p = any(ParseArray(Uint16))
+	case *[]uint32:
+		p = any(ParseArray(Uint32))
+	case *[]uint64:
+		p = any(ParseArray(Uint64))
+	case *[]float32:
+		p = any(ParseArray(Float32))
+	case *[]float64:
+		p = any(ParseArray(Float64))
+	case *[]bool:
+		p = any(ParseArray(Bool))
+	case *[]string:
+		p = any(ParseArray(String))
+	case *[]complex64:
+		p = any(ParseArray(Complex64))
+	case *[]complex128:
+		p = any(ParseArray(Complex128))
+	case *[]time.Duration:
+		p = any(ParseArray(Duration))
+	case *[]time.Time:
+		p = any(ParseArray(Time))
+	case *[]time.Location:
+		p = any(ParseArray(Location))
+	case *[]language.Tag:
+		p = any(ParseArray(Language))
+	case *types.HexByte:
+		p = any(HexByte)
+	case *types.OctByte:
+		p = any(OctByte)
+	case *types.HexBytes:
+		p = any(HexBytes)
+	case *types.B32Bytes:
+		p = any(B32Bytes)
+	case *types.B64Bytes:
+		p = any(B64Bytes)
+	case *[]types.HexByte:
+		p = any(ParseArray(HexByte))
+	case *[]types.OctByte:
+		p = any(ParseArray(OctByte))
+	case *[]types.HexBytes:
+		p = any(ParseArray(HexBytes))
+	case *[]types.B32Bytes:
+		p = any(ParseArray(B32Bytes))
+	case *[]types.B64Bytes:
+		p = any(ParseArray(B64Bytes))
 	}
 	return p.(func(string) (P, error))
 }
@@ -176,5 +276,24 @@ func Parse[P Parseable](take *P, str string) error {
 func MustParse[P Parseable](take *P, str string) {
 	if err := Parse(take, str); err != nil {
 		panic(err)
+	}
+}
+
+func ParseArray[P Parseable](parser func(string) (P, error)) func(string) ([]P, error) {
+	ret := []P{}
+	var part string
+	var v P
+	var err error
+	return func(str string) ([]P, error) {
+		parts := strings.Split(str, ",")
+		for i := range parts {
+			if part = strings.TrimSpace(parts[i]); part != "" {
+				if v, err = parser(part); err != nil {
+					return nil, err
+				}
+				ret = append(ret, v)
+			}
+		}
+		return ret, nil
 	}
 }
