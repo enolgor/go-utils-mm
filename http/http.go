@@ -17,15 +17,14 @@ type Request struct {
 	body    any
 	length  int64
 	form    *url.Values
-	debug   io.Writer
 }
 
 func Get(url string) *Request {
-	return &Request{"GET", url, map[string]string{}, nil, 0, nil, nil}
+	return &Request{"GET", url, map[string]string{}, nil, 0, nil}
 }
 
 func Post(url string) *Request {
-	return &Request{"POST", url, map[string]string{}, nil, 0, nil, nil}
+	return &Request{"POST", url, map[string]string{}, nil, 0, nil}
 }
 
 func (r *Request) WithHeader(key, value string) *Request {
@@ -48,7 +47,7 @@ func (r *Request) WithBody(body any) *Request {
 	return r
 }
 
-func (r *Request) AddFormValue(key string, value string) *Request {
+func (r *Request) WithFormValue(key string, value string) *Request {
 	if r.form == nil {
 		r.form = &url.Values{}
 	}
@@ -57,8 +56,14 @@ func (r *Request) AddFormValue(key string, value string) *Request {
 }
 
 func (r *Request) getBody() (string, io.ReadCloser, error) {
-	if r.body == nil {
+	if r.body == nil && r.form == nil {
 		return "", nil, nil
+	}
+	if r.body != nil && r.form != nil {
+		return "", nil, fmt.Errorf("can't specify body and form for the same request")
+	}
+	if r.form != nil {
+		return "application/x-www-form-urlencoded", io.NopCloser(strings.NewReader(r.form.Encode())), nil
 	}
 	var contentType string
 	var reader io.ReadCloser
@@ -88,11 +93,6 @@ func (r *Request) getBody() (string, io.ReadCloser, error) {
 	return contentType, reader, nil
 }
 
-func (r *Request) Debug(debug io.Writer) *Request {
-	r.debug = debug
-	return r
-}
-
 func (r *Request) Do() (*http.Response, error) {
 	if r.body != nil && r.form != nil {
 		return nil, fmt.Errorf("can't specify body and form for the same request")
@@ -100,42 +100,19 @@ func (r *Request) Do() (*http.Response, error) {
 	var body io.ReadCloser
 	var err error
 	var contentType string
-	if r.body != nil {
-		contentType, body, err = r.getBody()
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := r.headers[ContentType]; !ok {
-			r.headers[ContentType] = contentType
-		}
+	contentType, body, err = r.getBody()
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := r.headers[ContentType]; !ok {
+		r.headers[ContentType] = contentType
 	}
 	req, err := http.NewRequest(r.method, r.url, body)
 	if err != nil {
 		return nil, err
 	}
-	if r.form != nil {
-		req.PostForm = *r.form
-		r.headers[ContentType] = "application/x-www-form-urlencoded"
-	}
 	for k, v := range r.headers {
 		req.Header.Add(k, v)
 	}
-	if r.debug != nil {
-		r.printDebug(req)
-	}
 	return http.DefaultClient.Do(req)
-}
-
-func (r *Request) printDebug(req *http.Request) {
-	fmt.Fprintln(r.debug, "----PERFORMING REQUEST----")
-	fmt.Fprintf(r.debug, "Host: %s\n", req.Host)
-	fmt.Fprintf(r.debug, "Url: %s\n", req.URL.String())
-	fmt.Fprintln(r.debug, "Headers:")
-	for k, v := range req.Header {
-		for i := range v {
-			fmt.Fprintf(r.debug, "  %s: %s\n", k, v[i])
-		}
-	}
-	fmt.Fprintln(r.debug, "Body:")
-	req.Body = io.NopCloser(io.TeeReader(req.Body, r.debug))
 }
