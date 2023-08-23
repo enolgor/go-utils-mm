@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -15,14 +16,15 @@ type Request struct {
 	headers map[string]string
 	body    any
 	length  int64
+	form    *url.Values
 }
 
 func Get(url string) *Request {
-	return &Request{"GET", url, map[string]string{}, nil, 0}
+	return &Request{"GET", url, map[string]string{}, nil, 0, nil}
 }
 
 func Post(url string) *Request {
-	return &Request{"POST", url, map[string]string{}, nil, 0}
+	return &Request{"POST", url, map[string]string{}, nil, 0, nil}
 }
 
 func (r *Request) WithHeader(key, value string) *Request {
@@ -42,6 +44,14 @@ func (r *Request) WithBody(body any) *Request {
 		return r
 	}
 	r.body = body
+	return r
+}
+
+func (r *Request) AddFormValue(key string, value string) *Request {
+	if r.form == nil {
+		r.form = &url.Values{}
+	}
+	r.form.Add(key, value)
 	return r
 }
 
@@ -78,20 +88,31 @@ func (r *Request) getBody() (string, io.ReadCloser, error) {
 }
 
 func (r *Request) Do() (*http.Response, error) {
-	contentType, body, err := r.getBody()
-	if err != nil {
-		return nil, err
+	if r.body != nil && r.form != nil {
+		return nil, fmt.Errorf("can't specify body and form for the same request")
 	}
-	if _, ok := r.headers[ContentType]; !ok {
-		r.headers[ContentType] = contentType
+	var body io.ReadCloser
+	var err error
+	var contentType string
+	if r.body != nil {
+		contentType, body, err = r.getBody()
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := r.headers[ContentType]; !ok {
+			r.headers[ContentType] = contentType
+		}
 	}
 	req, err := http.NewRequest(r.method, r.url, body)
 	if err != nil {
 		return nil, err
 	}
+	if r.form != nil {
+		req.PostForm = *r.form
+		r.headers[ContentType] = "application/x-www-form-urlencoded"
+	}
 	for k, v := range r.headers {
 		req.Header.Add(k, v)
 	}
-	fmt.Println("do!")
 	return http.DefaultClient.Do(req)
 }
