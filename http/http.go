@@ -17,14 +17,15 @@ type Request struct {
 	body    any
 	length  int64
 	form    *url.Values
+	debug   io.Writer
 }
 
 func Get(url string) *Request {
-	return &Request{"GET", url, map[string]string{}, nil, 0, nil}
+	return &Request{"GET", url, map[string]string{}, nil, 0, nil, nil}
 }
 
 func Post(url string) *Request {
-	return &Request{"POST", url, map[string]string{}, nil, 0, nil}
+	return &Request{"POST", url, map[string]string{}, nil, 0, nil, nil}
 }
 
 func (r *Request) WithHeader(key, value string) *Request {
@@ -87,6 +88,11 @@ func (r *Request) getBody() (string, io.ReadCloser, error) {
 	return contentType, reader, nil
 }
 
+func (r *Request) Debug(debug io.Writer) *Request {
+	r.debug = debug
+	return r
+}
+
 func (r *Request) Do() (*http.Response, error) {
 	if r.body != nil && r.form != nil {
 		return nil, fmt.Errorf("can't specify body and form for the same request")
@@ -114,5 +120,22 @@ func (r *Request) Do() (*http.Response, error) {
 	for k, v := range r.headers {
 		req.Header.Add(k, v)
 	}
+	if r.debug != nil {
+		r.printDebug(req)
+	}
 	return http.DefaultClient.Do(req)
+}
+
+func (r *Request) printDebug(req *http.Request) {
+	fmt.Fprintln(r.debug, "----PERFORMING REQUEST----")
+	fmt.Fprintf(r.debug, "Host: %s\n", req.Host)
+	fmt.Fprintf(r.debug, "Url: %s\n", req.URL.String())
+	fmt.Fprintln(r.debug, "Headers:")
+	for k, v := range req.Header {
+		for i := range v {
+			fmt.Fprintf(r.debug, "  %s: %s\n", k, v[i])
+		}
+	}
+	fmt.Fprintln(r.debug, "Body:")
+	req.Body = io.NopCloser(io.TeeReader(req.Body, r.debug))
 }
