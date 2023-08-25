@@ -1,4 +1,4 @@
-package http
+package ht
 
 import "net/textproto"
 

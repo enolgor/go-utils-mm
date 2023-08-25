@@ -1,13 +1,17 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/enolgor/go-utils/examples"
 )
 
+// func main() {
+// 	fmt.Printf("%s:%d tz=%s t=%v\n", examples.HOST, examples.PORT, examples.TIMEZONE.String(), examples.TEST)
+// 	for _, lang := range examples.LANGS {
+// 		fmt.Printf("%v\n", lang)
+// 	}
+// 	//examples.Http()
+// }
+
 func main() {
-	fmt.Printf("%s:%d tz=%s t=%v\n", examples.HOST, examples.PORT, examples.TIMEZONE.String(), examples.TEST)
-	fmt.Printf("%v\n", examples.LANG)
-	//examples.Http()
+	examples.Server()
 }
