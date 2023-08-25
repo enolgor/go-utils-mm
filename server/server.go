@@ -57,7 +57,9 @@ func Handle(handlers ...any) func(w http.ResponseWriter, req *http.Request) {
 			case func(req *http.Request) (int, string, func(io.Writer)):
 				serveRequest(v)(w, req)
 			case ChainHandler:
-				stop = v(w, req)
+				stop = !v(w, req)
+			default:
+				stop = false
 			}
 			if stop {
 				return
