@@ -21,7 +21,7 @@ type Handler interface {
 
 type ChainHandler func(w http.ResponseWriter, req *http.Request) bool
 
-func (ch ChainHandler) Chain(next ChainHandler) ChainHandler {
+func (ch ChainHandler) Next(next ChainHandler) ChainHandler {
 	return func(w http.ResponseWriter, req *http.Request) bool {
 		if ch(w, req) {
 			return next(w, req)
@@ -50,6 +50,12 @@ func BasicAuthHandler(user, pass string) ChainHandler {
 			fmt.Fprint(w, "unauthorized")
 			return false
 		}
+		return true
+	}
+}
+
+func NopHandler() ChainHandler {
+	return func(w http.ResponseWriter, req *http.Request) bool {
 		return true
 	}
 }
