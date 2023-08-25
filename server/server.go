@@ -26,8 +26,6 @@ func BasicAuthHandler(user, pass string) ChainHandler {
 	b64auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+pass))
 	return func(w http.ResponseWriter, req *http.Request) bool {
 		if b64auth != req.Header.Get("Authorization") {
-			fmt.Println(b64auth)
-			fmt.Println(req.Header.Get("Authorization"))
 			w.Header().Add("Content-Type", "text/plain")
 			w.Header().Add("WWW-Authenticate", `Basic realm="Realm"`)
 			w.WriteHeader(401)
@@ -86,6 +84,8 @@ func serveBody(f func(*url.Values, io.Reader) (int, string, func(io.Writer))) fu
 		return f(&query, req.Body)
 	})
 }
+
+func serveForm()
 
 func serveRequest(f func(req *http.Request) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {

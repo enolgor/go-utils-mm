@@ -90,22 +90,45 @@ func Set[T Configurable](take *T, envKey, flagKey string, def T) {
 	set[T](take, envKey, flagKey, def, nil)
 }
 
-func SetKV[K Configurable, V Configurable](take *KeyValue[K, V], envKey, flagKey string, def KeyValue[K, V]) {
-	*take = def
-	set[K](&(take.Key), envKey, flagKey, def.Key, func(str string) (string, error) {
+func setKVarray[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey, flagKey string, def []KeyValue[K, V], i int) {
+	fmt.Printf("called i=%d\n", i)
+	if len(*take) < i+1 {
+		*take = append(*take, &KeyValue[K, V]{})
+	}
+	set[K](&((*take)[i].Key), envKey, flagKey, def[0].Key, func(str string) (string, error) {
+		parts := strings.Split(str, ",")
+		fmt.Printf("set=%d,len=%d\n", i, len(parts))
+		if len(parts) != i+1 {
+			fmt.Println("calling kv array")
+			setKVarray(take, envKey, flagKey, def, i+1)
+		}
+		str = parts[i]
+		fmt.Println(str)
 		idx := strings.Index(str, "=")
 		if idx == -1 {
 			return "", fmt.Errorf(`"=" sign not found for key-value property`)
 		}
 		return str[:idx], nil
 	})
-	set[V](&(take.Value), envKey, flagKey, def.Value, func(str string) (string, error) {
+	set[V](&((*take)[i].Value), envKey, flagKey, def[0].Value, func(str string) (string, error) {
+		parts := strings.Split(str, ",")
+		str = parts[i]
+		fmt.Println(str)
 		idx := strings.Index(str, "=")
 		if idx == -1 {
 			return "", fmt.Errorf(`"=" sign not found for key-value property`)
 		}
 		return str[idx+1:], nil
 	})
+}
+
+func SetKVs[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey, flagKey string, def []KeyValue[K, V]) {
+	setKVarray(take, envKey, flagKey, def, 0)
+}
+
+func SetKV[K Configurable, V Configurable](take *KeyValue[K, V], envKey, flagKey string, def KeyValue[K, V]) {
+	*take = def
+	setKVarray(&[]*KeyValue[K, V]{take}, envKey, flagKey, []KeyValue[K, V]{*take}, 0)
 }
 
 func SetEnv[T Configurable](take *T, envKey string, def T) {
