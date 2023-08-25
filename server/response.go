@@ -77,6 +77,10 @@ func ErrInternal(body any) *ResponseBuilder {
 	return NewResponse().Status(500).Body(body)
 }
 
+func Redirect(url string) (int, string, func(io.Writer)) {
+	return NewResponse().Status(200).Body(fmt.Sprintf(`<html><header><script>window.location.replace("%s");</script></header><body></body></html>`, url)).AsHtml()
+}
+
 func StringWriter(str string) func(writer io.Writer) {
 	return func(writer io.Writer) {
 		fmt.Fprint(writer, str)
