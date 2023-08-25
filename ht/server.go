@@ -60,6 +60,18 @@ func NopHandler() ChainHandler {
 	}
 }
 
+func HandleQuery(f func(*url.Values) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
+	return Handle(QueryHandler(f))
+}
+
+func HandleBody(f func(*url.Values, io.Reader) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
+	return Handle(BodyHandler(f))
+}
+
+func HandleRequest(f func(*http.Request) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
+	return Handle(RequestHandler(f))
+}
+
 func Handle[H Handler](h H) func(w http.ResponseWriter, req *http.Request) {
 	switch v := any(h).(type) {
 	case QueryHandler:
