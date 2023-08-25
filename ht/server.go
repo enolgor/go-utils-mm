@@ -121,14 +121,13 @@ func Html(str string) RequestHandler {
 
 func File(mime string, f io.Reader) RequestHandler {
 	return func(req *http.Request) (int, string, func(io.Writer)) {
-		return Ok(f).ContentType(mime).Build()
+		return Ok(f).As(mime)
 	}
 }
 
 type ResponseBuilder struct {
-	status      int
-	contentType string
-	body        any
+	status int
+	body   any
 }
 
 func NewResponse() *ResponseBuilder {
@@ -137,11 +136,6 @@ func NewResponse() *ResponseBuilder {
 
 func (rb *ResponseBuilder) Status(status int) *ResponseBuilder {
 	rb.status = status
-	return rb
-}
-
-func (rb *ResponseBuilder) ContentType(contentType string) *ResponseBuilder {
-	rb.contentType = contentType
 	return rb
 }
 
@@ -162,8 +156,8 @@ func (rb *ResponseBuilder) AsHtml() (int, string, func(io.Writer)) {
 	return rb.status, "text/html", rb.writer()
 }
 
-func (rb *ResponseBuilder) Build() (int, string, func(io.Writer)) {
-	return rb.status, rb.contentType, rb.writer()
+func (rb *ResponseBuilder) As(contentType string) (int, string, func(io.Writer)) {
+	return rb.status, contentType, rb.writer()
 }
 
 func (rb *ResponseBuilder) writer() func(io.Writer) {
@@ -174,6 +168,8 @@ func (rb *ResponseBuilder) writer() func(io.Writer) {
 		return errWriter(b)
 	case io.Reader:
 		return readerWriter(b)
+	case func(io.Writer):
+		return b
 	default:
 		return jsonWriter(b)
 	}
