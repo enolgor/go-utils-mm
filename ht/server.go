@@ -30,6 +30,23 @@ func (ch ChainHandler) Next(next ChainHandler) ChainHandler {
 	}
 }
 
+var HandleGet ChainHandler = Method("GET")
+var HandlePost ChainHandler = Method("POST")
+var HandlePut ChainHandler = Method("PUT")
+var HandlePath ChainHandler = Method("PATCH")
+
+func Method(method string) ChainHandler {
+	return func(w http.ResponseWriter, req *http.Request) bool {
+		if req.Method == method {
+			return true
+		}
+		w.Header().Add("Content-Type", "text/plain")
+		w.WriteHeader(400)
+		fmt.Fprint(w, "unsupported method")
+		return false
+	}
+}
+
 func (ch ChainHandler) Finally(last func(w http.ResponseWriter, req *http.Request)) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if ch(w, req) {
