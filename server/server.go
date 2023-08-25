@@ -38,6 +38,12 @@ func BasicAuthHandler(user, pass string) ChainHandler {
 	}
 }
 
+func NopHandler() ChainHandler {
+	return func(w http.ResponseWriter, req *http.Request) bool {
+		return true
+	}
+}
+
 func Handle(handlers ...any) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		stop := false
