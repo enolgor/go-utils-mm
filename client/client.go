@@ -1,4 +1,4 @@
-package ht
+package client
 
 import (
 	"bytes"
