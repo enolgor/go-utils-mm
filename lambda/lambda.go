@@ -3,8 +3,10 @@ package lambda
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -74,6 +76,9 @@ func Handler(event *lambdaRequest) (*lambdaResponse, error) {
 }
 
 func GetRequest(event *lambdaRequest) *http.Request {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.Encode(event)
 	var body []byte
 	if event.IsBase64Encoded {
 		body, _ = base64.StdEncoding.DecodeString(event.Body)
