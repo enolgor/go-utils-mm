@@ -85,8 +85,6 @@ func serveBody(f func(*url.Values, io.Reader) (int, string, func(io.Writer))) fu
 	})
 }
 
-func serveForm()
-
 func serveRequest(f func(req *http.Request) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var status int
