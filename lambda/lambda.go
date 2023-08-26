@@ -57,12 +57,12 @@ func HandleFunc(path string, f func(w http.ResponseWriter, req *http.Request)) {
 	handlers[path] = f
 }
 
-func Handler(event *lambdaRequest) *lambdaResponse {
+func Handler(event *lambdaRequest) (*lambdaResponse, error) {
 	h := handlers[event.RawPath]
 	if h != nil {
 		rw := NewLambdaResponseWriter()
 		h(http.ResponseWriter(rw), GetRequest(event))
-		return rw.GetLambdaResponse()
+		return rw.GetLambdaResponse(), nil
 	}
 	return &lambdaResponse{
 		StatusCode:      404,
@@ -70,7 +70,7 @@ func Handler(event *lambdaRequest) *lambdaResponse {
 		Headers:         map[string]string{"Content-Type": "text/plain"},
 		Cookies:         []string{},
 		IsBase64Encoded: false,
-	}
+	}, nil
 }
 
 func GetRequest(event *lambdaRequest) *http.Request {
