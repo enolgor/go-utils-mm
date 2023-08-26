@@ -3,10 +3,8 @@ package lambda
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -76,16 +74,13 @@ func Handler(event *lambdaRequest) (*lambdaResponse, error) {
 }
 
 func GetRequest(event *lambdaRequest) *http.Request {
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	enc.Encode(event)
 	var body []byte
 	if event.IsBase64Encoded {
 		body, _ = base64.StdEncoding.DecodeString(event.Body)
 	} else {
 		body = []byte(event.Body)
 	}
-	url := fmt.Sprintf("https://%s%s%s", event.RequestContext.DomainName, event.RawPath, event.RawQueryString)
+	url := fmt.Sprintf("https://%s%s?%s", event.RequestContext.DomainName, event.RawPath, event.RawQueryString)
 	req, _ := http.NewRequest(event.RequestContext.Http.Method, url, bytes.NewBuffer(body))
 	req.Header = make(http.Header)
 	for k, v := range event.Headers {
