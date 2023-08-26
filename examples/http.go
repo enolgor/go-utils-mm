@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/enolgor/go-utils/ht"
+	"github.com/enolgor/go-utils/client"
 )
 
 type Body struct {
@@ -14,7 +14,7 @@ type Body struct {
 }
 
 func Http() {
-	resp, err := ht.Post("http://postman-echo.com/post").WithHeader("test-header", "asdf").WithBody(Body{Salute: "hello"}).Do()
+	resp, err := client.Post("http://postman-echo.com/post").WithHeader("test-header", "asdf").WithBody(Body{Salute: "hello"}).Do()
 	if err != nil {
 		log.Fatal(err)
 	}

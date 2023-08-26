@@ -1,4 +1,4 @@
-module github.com/enolgor/go-utils/textutils
+module github.com/enolgor/go-utils
 
 go 1.20
 
