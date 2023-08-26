@@ -1,4 +1,4 @@
-package lambda
+package aes
 
 import (
 	"crypto/aes"
@@ -9,10 +9,10 @@ import (
 	"io"
 )
 
-const keystring string = "@%2FeHJwUcvgovTC^jGD55a6@gXgY#Tr"
+//const keystring string = "@%2FeHJwUcvgovTC^jGD55a6@gXgY#Tr"
 
 // encrypt string to base64 crypto using AES
-func encrypt(text string) (string, error) {
+func Encrypt(keystring, text string) (string, error) {
 	key := []byte(keystring)
 	// key := []byte(keyText)
 	plaintext := []byte(text)
@@ -38,7 +38,7 @@ func encrypt(text string) (string, error) {
 }
 
 // decrypt from base64 to decrypted string
-func decrypt(cryptoText string) (string, error) {
+func Decrypt(keystring, cryptoText string) (string, error) {
 	key := []byte(keystring)
 	ciphertext, err := base64.URLEncoding.DecodeString(cryptoText)
 	if err != nil {
