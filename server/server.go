@@ -1,14 +1,15 @@
 package server
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 )
 
-type ChainHandler func(w http.ResponseWriter, req *http.Request) bool
+type ChainHandler func(http.ResponseWriter, *http.Request) bool
+type contextKey any
 
 func Method(method string) ChainHandler {
 	return func(w http.ResponseWriter, req *http.Request) bool {
@@ -44,30 +45,44 @@ func NopHandler() ChainHandler {
 
 func Handle(handlers ...any) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		stop := false
+		follow := true
 		for _, next := range handlers {
-			stop = true
+			follow = false
 			switch v := next.(type) {
-			case func(*url.Values) (int, string, func(io.Writer)):
-				serveQuery(v)(w, req)
-			case func(*url.Values, io.Reader) (int, string, func(io.Writer)):
-				serveBody(v)(w, req)
-			case func(req *http.Request) (int, string, func(io.Writer)):
-				serveRequest(v)(w, req)
-			case func(w http.ResponseWriter, req *http.Request):
+			case http.HandlerFunc:
 				v(w, req)
-			case func(w http.ResponseWriter, req *http.Request) bool:
-				stop = !v(w, req)
+			case func(http.ResponseWriter, *http.Request):
+				v(w, req)
 			case ChainHandler:
-				stop = !v(w, req)
+				follow = v(w, req)
+			case func(http.ResponseWriter, *http.Request) bool:
+				follow = v(w, req)
 			default:
-				stop = false
+				panic(fmt.Sprintf("unknown method signature: %T", next))
 			}
-			if stop {
+			if !follow {
 				return
 			}
 		}
 	}
+}
+
+func AddContextValue(req *http.Request, key, value any) {
+	r := req.WithContext(context.WithValue(req.Context(), contextKey(key), value))
+	*req = *r
+}
+
+func GetContextValue[t any](req *http.Request, key any, value *t) bool {
+	v := req.Context().Value(contextKey(key))
+	s, ok := v.(t)
+	if ok && value != nil {
+		*value = s
+	}
+	return ok
+}
+
+func HasContextValue[t any](req *http.Request, key any) bool {
+	return GetContextValue[t](req, key, nil)
 }
 
 var Get ChainHandler = Method("GET")
@@ -75,43 +90,14 @@ var Post ChainHandler = Method("POST")
 var Put ChainHandler = Method("PUT")
 var Path ChainHandler = Method("PATCH")
 
-func serveQuery(f func(*url.Values) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
-	return serveRequest(func(req *http.Request) (int, string, func(io.Writer)) {
-		query := req.URL.Query()
-		return f(&query)
-	})
-}
-
-func serveBody(f func(*url.Values, io.Reader) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
-	return serveRequest(func(req *http.Request) (int, string, func(io.Writer)) {
-		query := req.URL.Query()
-		return f(&query, req.Body)
-	})
-}
-
-func serveRequest(f func(req *http.Request) (int, string, func(io.Writer))) func(w http.ResponseWriter, req *http.Request) {
+func Html(str string) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		var status int
-		var ctype string
-		var writer func(io.Writer)
-		status, ctype, writer = f(req)
-		defer req.Body.Close()
-		w.Header().Add("Content-Type", ctype)
-		w.WriteHeader(status)
-		if writer != nil {
-			writer(w)
-		}
+		Response(w).WithBody(str).AsHtml()
 	}
 }
 
-func Html(str string) func(req *http.Request) (int, string, func(io.Writer)) {
-	return func(req *http.Request) (int, string, func(io.Writer)) {
-		return Ok(str).AsHtml()
-	}
-}
-
-func File(mime string, f io.Reader) func(req *http.Request) (int, string, func(io.Writer)) {
-	return func(req *http.Request) (int, string, func(io.Writer)) {
-		return Ok(f).As(mime)
+func File(contentType string, f io.Reader) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		Response(w).WithBody(f).As(contentType)
 	}
 }

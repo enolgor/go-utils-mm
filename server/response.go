@@ -4,107 +4,89 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 )
 
-type ResponseBuilder struct {
+type ResponseBuilder interface {
+	Status(status int) ResponseBuilder
+	WithBody(body any) ResponseBuilder
+	WithHeader(key, value string) ResponseBuilder
+	WithCookie(cookie *http.Cookie) ResponseBuilder
+	Redirect(redirect string)
+	As(contentType string)
+	AsTextPlain()
+	AsJson()
+	AsHtml()
+}
+
+type responseBuilder struct {
+	w      http.ResponseWriter
 	status int
 	body   any
 }
 
-func NewResponse() *ResponseBuilder {
-	return &ResponseBuilder{}
+func Response(w http.ResponseWriter) ResponseBuilder {
+	return &responseBuilder{w: w, status: http.StatusOK, body: nil}
 }
 
-func (rb *ResponseBuilder) Status(status int) *ResponseBuilder {
+func (rb *responseBuilder) Status(status int) ResponseBuilder {
 	rb.status = status
 	return rb
 }
 
-func (rb *ResponseBuilder) Body(body any) *ResponseBuilder {
+func (rb *responseBuilder) WithBody(body any) ResponseBuilder {
 	rb.body = body
 	return rb
 }
 
-func (rb *ResponseBuilder) AsTextPlain() (int, string, func(io.Writer)) {
-	return rb.status, "text/plain", rb.writer()
+func (rb *responseBuilder) WithHeader(key, value string) ResponseBuilder {
+	rb.w.Header().Add(key, value)
+	return rb
 }
 
-func (rb *ResponseBuilder) AsJson() (int, string, func(io.Writer)) {
-	return rb.status, "application/json", rb.writer()
+func (rb *responseBuilder) WithCookie(cookie *http.Cookie) ResponseBuilder {
+	http.SetCookie(rb.w, cookie)
+	return rb
 }
 
-func (rb *ResponseBuilder) AsHtml() (int, string, func(io.Writer)) {
-	return rb.status, "text/html", rb.writer()
-}
-
-func (rb *ResponseBuilder) As(contentType string) (int, string, func(io.Writer)) {
-	return rb.status, contentType, rb.writer()
-}
-
-func (rb *ResponseBuilder) writer() func(io.Writer) {
+func (rb *responseBuilder) writeBody() {
 	if rb.body == nil {
-		return func(io.Writer) {
-
-		}
+		return
 	}
 	switch b := rb.body.(type) {
 	case string:
-		return StringWriter(b)
+		fmt.Fprint(rb.w, b)
 	case error:
-		return ErrWriter(b)
+		fmt.Fprintf(rb.w, "error: %s", b.Error())
 	case io.Reader:
-		return ReaderWriter(b)
+		io.Copy(rb.w, b)
 	case func(io.Writer):
-		return b
+		b(rb.w)
 	default:
-		return JsonWriter(b)
-	}
-}
-
-func Ok(body any) *ResponseBuilder {
-	return NewResponse().Status(200).Body(body)
-}
-
-func ErrNotFound(body any) *ResponseBuilder {
-	return NewResponse().Status(404).Body(body)
-}
-
-func ErrBadRequest(body any) *ResponseBuilder {
-	return NewResponse().Status(400).Body(body)
-}
-
-func ErrInternal(body any) *ResponseBuilder {
-	return NewResponse().Status(500).Body(body)
-}
-
-func Redirect(url string) (int, string, func(io.Writer)) {
-	return NewResponse().Status(200).Body(fmt.Sprintf(`<html><header><script>window.location.replace("%s");</script></header><body></body></html>`, url)).AsHtml()
-}
-
-func StringWriter(str string) func(writer io.Writer) {
-	return func(writer io.Writer) {
-		fmt.Fprint(writer, str)
-	}
-}
-
-func ErrWriter(err error) func(writer io.Writer) {
-	return func(writer io.Writer) {
-		if err != nil {
-			fmt.Fprintf(writer, "error: %s", err.Error())
-		}
-	}
-}
-
-func JsonWriter(data any) func(writer io.Writer) {
-	return func(writer io.Writer) {
-		enc := json.NewEncoder(writer)
+		enc := json.NewEncoder(rb.w)
 		enc.SetIndent("", "  ")
-		enc.Encode(data)
+		enc.Encode(b)
 	}
 }
 
-func ReaderWriter(data io.Reader) func(writer io.Writer) {
-	return func(writer io.Writer) {
-		io.Copy(writer, data)
-	}
+func (rb *responseBuilder) As(contentType string) {
+	rb.w.WriteHeader(rb.status)
+	rb.WithHeader("Content-Type", contentType)
+	rb.writeBody()
+}
+
+func (rb *responseBuilder) AsTextPlain() {
+	rb.As("text/plain")
+}
+
+func (rb *responseBuilder) AsJson() {
+	rb.As("application/json")
+}
+
+func (rb *responseBuilder) AsHtml() {
+	rb.As("text/html")
+}
+
+func (rb *responseBuilder) Redirect(redirect string) {
+	rb.WithBody(fmt.Sprintf(`<html><header><script>window.location.replace("%s");</script></header><body></body></html>`, redirect)).AsHtml()
 }

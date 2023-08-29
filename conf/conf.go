@@ -91,7 +91,7 @@ func Set[T Configurable](take *T, envKey, flagKey string, def T) {
 }
 
 func setKVarray[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey, flagKey string, def []KeyValue[K, V], i int) {
-	fmt.Printf("called i=%d\n", i)
+	//fmt.Printf("called i=%d\n", i)
 	if len(*take) < i+1 {
 		*take = append(*take, &KeyValue[K, V]{})
 	}

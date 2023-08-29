@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/enolgor/go-utils/server"
 )
 
 // func WithAuthentication(handler Handler, expiry time.Duration, password string) Handler {
@@ -51,26 +53,19 @@ import (
 // 	}
 // }
 
-var handlers map[string]func(w http.ResponseWriter, req *http.Request) = make(map[string]func(w http.ResponseWriter, req *http.Request))
+// var handlers map[string]func(w http.ResponseWriter, req *http.Request) = make(map[string]func(w http.ResponseWriter, req *http.Request))
 
-func HandleFunc(path string, f func(w http.ResponseWriter, req *http.Request)) {
-	handlers[path] = f
-}
+// func HandleFunc(path string, f func(w http.ResponseWriter, req *http.Request)) {
+// 	handlers[path] = f
+// }
 
-func Handler(event *lambdaRequest) (*lambdaResponse, error) {
-	h := handlers[event.RawPath]
-	if h != nil {
+func Handler(router *server.Router) func(event *lambdaRequest) (*lambdaResponse, error) {
+	return func(event *lambdaRequest) (*lambdaResponse, error) {
 		rw := NewLambdaResponseWriter()
-		h(http.ResponseWriter(rw), GetRequest(event))
+		req := GetRequest(event)
+		router.ServeHTTP(rw, req)
 		return rw.GetLambdaResponse(), nil
 	}
-	return &lambdaResponse{
-		StatusCode:      404,
-		Body:            "not found",
-		Headers:         map[string]string{"Content-Type": "text/plain"},
-		Cookies:         []string{},
-		IsBase64Encoded: false,
-	}, nil
 }
 
 func GetRequest(event *lambdaRequest) *http.Request {
