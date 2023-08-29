@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var exampleEvent = lambdaRequest{
+var exampleEvent = LambdaRequest{
 	Body:                  "some-body",
 	IsBase64Encoded:       false,
 	QueryStringParameters: map[string]string{"a": "b", "c": "d"},

@@ -1,6 +1,6 @@
 package lambda
 
-type lambdaRequest struct {
+type LambdaRequest struct {
 	Body                  string            `json:"body"`
 	IsBase64Encoded       bool              `json:"isBase64Encoded"`
 	QueryStringParameters map[string]string `json:"queryStringParameters"`
@@ -16,7 +16,7 @@ type lambdaRequest struct {
 	} `json:"requestContext"`
 }
 
-type lambdaResponse struct {
+type LambdaResponse struct {
 	StatusCode      int               `json:"statusCode"`
 	Headers         map[string]string `json:"headers"`
 	Body            string            `json:"body"`

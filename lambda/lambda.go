@@ -59,8 +59,8 @@ import (
 // 	handlers[path] = f
 // }
 
-func Handler(router *server.Router) func(event *lambdaRequest) (*lambdaResponse, error) {
-	return func(event *lambdaRequest) (*lambdaResponse, error) {
+func Handler(router *server.Router) func(event *LambdaRequest) (*LambdaResponse, error) {
+	return func(event *LambdaRequest) (*LambdaResponse, error) {
 		rw := NewLambdaResponseWriter()
 		req := GetRequest(event)
 		router.ServeHTTP(rw, req)
@@ -68,7 +68,7 @@ func Handler(router *server.Router) func(event *lambdaRequest) (*lambdaResponse,
 	}
 }
 
-func GetRequest(event *lambdaRequest) *http.Request {
+func GetRequest(event *LambdaRequest) *http.Request {
 	var body []byte
 	if event.IsBase64Encoded {
 		body, _ = base64.StdEncoding.DecodeString(event.Body)
@@ -113,8 +113,8 @@ func (lrw *LambdaResponseWriter) WriteHeader(statusCode int) {
 	lrw.status = statusCode
 }
 
-func (lrw LambdaResponseWriter) GetLambdaResponse() *lambdaResponse {
-	lr := &lambdaResponse{
+func (lrw LambdaResponseWriter) GetLambdaResponse() *LambdaResponse {
+	lr := &LambdaResponse{
 		IsBase64Encoded: false,
 		StatusCode:      lrw.status,
 	}
