@@ -1,0 +1,6 @@
+github.com/enolgor/go-utils-mm v0.0.0-20230830083708-4ed103b1cdda h1:y7KcKBq4yopuhz8OJ+3R1PDC3Jl9cBo1qGh2mOh8uEY=
+github.com/enolgor/go-utils-mm v0.0.0-20230830083708-4ed103b1cdda/go.mod h1:O6YwW/avz8Z1JlZihX6EWGYhGcYeum/bwHrdvsQTz6I=
+golang.org/x/crypto v0.12.0 h1:tFM/ta59kqch6LlvYnPa0yx5a83cL2nHflFhYKvv9Yk=
+golang.org/x/crypto v0.12.0/go.mod h1:NF0Gs7EO5K4qLn+Ylc+fih8BSTeIjAP05siRnAh98yw=
+golang.org/x/text v0.12.0 h1:k+n5B8goJNdU7hSvEtMUz3d1Q6D/XW4COJSJR6fN0mc=
+golang.org/x/text v0.12.0/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
