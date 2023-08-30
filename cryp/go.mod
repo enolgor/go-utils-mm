@@ -1,4 +1,4 @@
-module github.com/go-utils-mm/crypto
+module github.com/enolgor/go-utils-mm/cryp
 
 go 1.20
 

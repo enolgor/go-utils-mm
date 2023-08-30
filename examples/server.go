@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/enolgor/go-utils-mm/crypto"
+	"github.com/enolgor/go-utils-mm/cryp"
 	"github.com/enolgor/go-utils-mm/parse"
 	"github.com/enolgor/go-utils-mm/server"
 	"github.com/golang-jwt/jwt/v5"
@@ -15,15 +15,15 @@ import (
 var hashedPasswords map[string]string = map[string]string{}
 
 func init() {
-	cost := crypto.OptimalCost(250 * time.Millisecond)
-	hashedPasswords["admin"], _ = crypto.HashPassword("test", cost)
+	cost := cryp.OptimalCost(250 * time.Millisecond)
+	hashedPasswords["admin"], _ = cryp.HashPassword("test", cost)
 }
 
 func Server(port int) {
 	key := parse.Must(parse.HexBytes)("bc27bec0c4291b4e43a2ec657d8afc9b668e158c6acd4004ffb1faa16c5b88bf")
 	jwt := server.NewJwtAuth(key, 5*time.Minute, func(user, pass string) (bool, error) {
 		hpass, ok := hashedPasswords[user]
-		return ok && crypto.ComparePassword(hpass, pass) == nil, nil
+		return ok && cryp.ComparePassword(hpass, pass) == nil, nil
 	})
 	strictAuth := jwt.StrictAuthHandler("/login")
 	softAuth := jwt.SoftAuthHandler()
