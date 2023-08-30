@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/enolgor/go-utils/examples"
+	"github.com/enolgor/go-utils-mm/examples"
 )
 
 type Key string

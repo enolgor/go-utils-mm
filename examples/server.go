@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/enolgor/go-utils/crypto"
-	"github.com/enolgor/go-utils/parse"
-	"github.com/enolgor/go-utils/server"
+	"github.com/enolgor/go-utils-mm/crypto"
+	"github.com/enolgor/go-utils-mm/parse"
+	"github.com/enolgor/go-utils-mm/server"
 	"github.com/golang-jwt/jwt/v5"
 )
 

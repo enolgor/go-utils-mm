@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/enolgor/go-utils/conf"
+	"github.com/enolgor/go-utils-mm/conf"
 	"golang.org/x/text/language"
 )
 

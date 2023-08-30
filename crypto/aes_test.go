@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/enolgor/go-utils/parse"
+	"github.com/enolgor/go-utils-mm/parse"
 )
 
 var plain string = "this is some text"

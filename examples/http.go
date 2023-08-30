@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/enolgor/go-utils/client"
+	"github.com/enolgor/go-utils-mm/client"
 )
 
 type Body struct {

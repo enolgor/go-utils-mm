@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/enolgor/go-utils/server/path"
+	"github.com/enolgor/go-utils-mm/server/path"
 )
 
 type Router struct {

@@ -1,4 +1,4 @@
-module github.com/enolgor/go-utils
+module github.com/enolgor/go-utils-mm
 
 go 1.20
 

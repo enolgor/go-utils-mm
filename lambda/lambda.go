@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/enolgor/go-utils/server"
+	"github.com/enolgor/go-utils-mm/server"
 )
 
 // func WithAuthentication(handler Handler, expiry time.Duration, password string) Handler {

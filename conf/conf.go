@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/enolgor/go-utils/parse"
+	"github.com/enolgor/go-utils-mm/parse"
 )
 
 type KeyValue[K Configurable, V Configurable] struct {
