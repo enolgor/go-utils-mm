@@ -54,10 +54,12 @@ func (ja *JwtAuth) SoftAuthHandler() ChainHandler {
 
 func (ja *JwtAuth) StrictAuthHandler(redirect string) ChainHandler {
 	return func(w http.ResponseWriter, req *http.Request) bool {
-		if strings.Contains(redirect, "?") {
-			redirect = fmt.Sprintf("%s&redirect=%s", redirect, url.QueryEscape(req.URL.Path))
-		} else {
-			redirect = fmt.Sprintf("%s?redirect=%s", redirect, url.QueryEscape(req.URL.Path))
+		if !strings.Contains(redirect, "redirect") {
+			if strings.Contains(redirect, "?") {
+				redirect = fmt.Sprintf("%s&redirect=%s", redirect, url.QueryEscape(req.URL.Path))
+			} else {
+				redirect = fmt.Sprintf("%s?redirect=%s", redirect, url.QueryEscape(req.URL.Path))
+			}
 		}
 		var jwtString string
 		if jwtString = getJwtString(req); jwtString == "" {
