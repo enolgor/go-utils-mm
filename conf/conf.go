@@ -97,13 +97,13 @@ func setKVarray[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey,
 	}
 	set[K](&((*take)[i].Key), envKey, flagKey, def[0].Key, func(str string) (string, error) {
 		parts := strings.Split(str, ",")
-		fmt.Printf("set=%d,len=%d\n", i, len(parts))
+		//fmt.Printf("set=%d,len=%d\n", i, len(parts))
 		if len(parts) != i+1 {
-			fmt.Println("calling kv array")
+			//fmt.Println("calling kv array")
 			setKVarray(take, envKey, flagKey, def, i+1)
 		}
 		str = parts[i]
-		fmt.Println(str)
+		//fmt.Println(str)
 		idx := strings.Index(str, "=")
 		if idx == -1 {
 			return "", fmt.Errorf(`"=" sign not found for key-value property`)
@@ -113,7 +113,7 @@ func setKVarray[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey,
 	set[V](&((*take)[i].Value), envKey, flagKey, def[0].Value, func(str string) (string, error) {
 		parts := strings.Split(str, ",")
 		str = parts[i]
-		fmt.Println(str)
+		//fmt.Println(str)
 		idx := strings.Index(str, "=")
 		if idx == -1 {
 			return "", fmt.Errorf(`"=" sign not found for key-value property`)
@@ -122,9 +122,9 @@ func setKVarray[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey,
 	})
 }
 
-func SetKVs[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey, flagKey string, def []KeyValue[K, V]) {
-	setKVarray(take, envKey, flagKey, def, 0)
-}
+// func SetKVs[K Configurable, V Configurable](take *[]*KeyValue[K, V], envKey, flagKey string, def []KeyValue[K, V]) {
+// 	setKVarray(take, envKey, flagKey, def, 0)
+// }
 
 func SetKV[K Configurable, V Configurable](take *KeyValue[K, V], envKey, flagKey string, def KeyValue[K, V]) {
 	*take = def
@@ -139,13 +139,13 @@ func SetFlag[T Configurable](take *T, flagKey string, def T) {
 	Set(take, "", flagKey, def)
 }
 
-func SetEnvKV[K Configurable, V Configurable](take *KeyValue[K, V], envKey string, def KeyValue[K, V]) {
-	SetKV(take, envKey, "", def)
-}
+// func SetEnvKV[K Configurable, V Configurable](take *KeyValue[K, V], envKey string, def KeyValue[K, V]) {
+// 	SetKV(take, envKey, "", def)
+// }
 
-func SetFlagKV[K Configurable, V Configurable](take *KeyValue[K, V], flagKey string, def KeyValue[K, V]) {
-	SetKV(take, "", flagKey, def)
-}
+// func SetFlagKV[K Configurable, V Configurable](take *KeyValue[K, V], flagKey string, def KeyValue[K, V]) {
+// 	SetKV(take, "", flagKey, def)
+// }
 
 func Read() {
 	if envErr != nil {

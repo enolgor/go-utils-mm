@@ -65,13 +65,15 @@ func (rb *responseBuilder) writeBody() {
 	default:
 		enc := json.NewEncoder(rb.w)
 		enc.SetIndent("", "  ")
-		enc.Encode(b)
+		if err := enc.Encode(b); err != nil {
+			panic(err)
+		}
 	}
 }
 
 func (rb *responseBuilder) As(contentType string) {
-	rb.w.WriteHeader(rb.status)
 	rb.WithHeader("Content-Type", contentType)
+	rb.w.WriteHeader(rb.status)
 	rb.writeBody()
 }
 

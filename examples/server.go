@@ -2,6 +2,7 @@ package examples
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -11,8 +12,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var hashedPasswords map[string]string = map[string]string{
-	"eneko": "$2a$10$nIhmpNzH1uDfXJ7i.NSByekfJ3KbKOO3W1Kf9qfeZ3MYg.YvMUV9i",
+var hashedPasswords map[string]string = map[string]string{}
+
+func init() {
+	cost := crypto.OptimalCost(250 * time.Millisecond)
+	hashedPasswords["admin"], _ = crypto.HashPassword("test", cost)
 }
 
 func Server(port int) {
@@ -24,12 +28,17 @@ func Server(port int) {
 	strictAuth := jwt.StrictAuthHandler("/login")
 	softAuth := jwt.SoftAuthHandler()
 	login := jwt.LoginHandler()
-	form := jwt.SampleAuthForm("/doLogin", "/")
+	form := jwt.SampleAuthForm("/login", "/")
 
-	router := server.NewRouter()
-	router.Register("GET", "/", server.Handle(server.Get, strictAuth, hello))
-	router.Register("GET", "/login", server.Handle(server.Get, softAuth, form))
-	router.Register("POST", "/doLogin", server.Handle(server.Post, login))
+	var router *server.Router
+	var err error
+	if router, err = server.NewRouterBuilder().
+		Get("/login", server.Handle(server.Get, softAuth, form)).
+		Post("/login", server.Handle(server.Post, login)).
+		Get("/(.*)", server.Handle(server.Get, strictAuth, hello)).
+		Build(); err != nil {
+		log.Fatal(err)
+	}
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), router); err != nil {
 		panic(err)
 	}
@@ -47,8 +56,11 @@ func hello(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	pathParams := server.PathParams(req)
-	fmt.Println(pathParams.Get("idiot"))
-	fmt.Println(pathParams["idiot"])
-	fmt.Println(pathParams.Get("idiota"))
-	server.Response(w).WithBody(fmt.Sprintf("hello %s", sub)).AsTextPlain()
+	if pathParams[0] == "panic" {
+		panic("example panic!")
+	}
+	data := struct {
+		User string `json:"user"`
+	}{User: sub}
+	server.Response(w).WithBody(data).AsJson()
 }

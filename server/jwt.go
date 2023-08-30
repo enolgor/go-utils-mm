@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -53,6 +54,11 @@ func (ja *JwtAuth) SoftAuthHandler() ChainHandler {
 
 func (ja *JwtAuth) StrictAuthHandler(redirect string) ChainHandler {
 	return func(w http.ResponseWriter, req *http.Request) bool {
+		if strings.Contains(redirect, "?") {
+			redirect = fmt.Sprintf("%s&redirect=%s", redirect, url.QueryEscape(req.URL.Path))
+		} else {
+			redirect = fmt.Sprintf("%s?redirect=%s", redirect, url.QueryEscape(req.URL.Path))
+		}
 		var jwtString string
 		if jwtString = getJwtString(req); jwtString == "" {
 			Response(w).Status(http.StatusUnauthorized).Redirect(redirect)
@@ -127,12 +133,16 @@ func (ja *JwtAuth) LoginHandler() http.HandlerFunc {
 	}
 }
 
-func (ja *JwtAuth) SampleAuthForm(target, redirect string) http.HandlerFunc {
+func (ja *JwtAuth) SampleAuthForm(target, defaultRedirect string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Query().Has("redirect") {
+			defaultRedirect = req.URL.Query().Get("redirect")
+		}
 		if HasContextValue[jwt.Claims](req, contextJwtClaims) {
-			Response(w).Redirect(redirect)
+			Response(w).Redirect(defaultRedirect)
 			return
 		}
+
 		Response(w).WithBody(fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html lang="en">
@@ -149,7 +159,7 @@ func (ja *JwtAuth) SampleAuthForm(target, redirect string) http.HandlerFunc {
 				</form>
 			</body>
 		</html>
-		`, target, redirect)).AsHtml()
+		`, target, defaultRedirect)).AsHtml()
 	}
 }
 
